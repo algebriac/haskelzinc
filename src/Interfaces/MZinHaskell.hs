@@ -122,7 +122,7 @@ testModelWithParser p m mpath s n = do
   writeFile (mpath ++ ".mzn") (layout m)
   readCreateProcess (shell mfzn) (layout m)
   res <- case s of
-           1 -> readCreateProcess (shell $ flatzinc ++ " -a -b fd " ++ mpath ++ ".fzn") ""
+           1 -> readCreateProcess (shell $ flatzinc ++ " -n " ++ show n ++ " -b fd " ++ mpath ++ ".fzn") ""
            -- 1 -> readCreateProcess (shell $ flatzinc ++ " -a -b fd " ++ mpath ++ ".fzn > " ++ mpath ++ ".results.txt") ""
            2 -> let antlr       = antlr_path configuration
                     chocoParser = chocoparser configuration
