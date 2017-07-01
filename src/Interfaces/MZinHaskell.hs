@@ -37,7 +37,7 @@ testModelWithData
   :: MZModel  -- ^ The model
   -> MZModel  -- ^ The data to be used by the model
   -> FilePath -- ^ Path of the file in which the FlatZinc translation will be printed (without ".fzn" extension)
-  -> Int      -- ^ Chosen solver (@1@ for the G12/FD built-in solver or @2@ for choco3)
+  -> Int      -- ^ Chosen solver (@1@ for the G12/FD built-in solver, @2@ for choco3 or @3@ for gecode)
   -> Int      -- ^ Number of solutions to be returned
   -> IO (Either ParseError [Solution])
 testModelWithData model mdata path solver num = 
@@ -60,7 +60,7 @@ iRunModel = iTestModel . map turnToItem
 -- the model contains no @output@ item, so that the solutions have the default format.
 runModel :: [ModelData] -- ^ The model
          -> FilePath    -- ^ The path of the file in which the FlatZinc translation will be printed (without ".fzn" extension)
-         -> Int         -- ^ The chosen solver (@1@ for the G12/FD built-in solver or @2@ for choco3)
+         -> Int         -- ^ The chosen solver (@1@ for the G12/FD built-in solver, @2@ for choco3 or @3@ for gecode)
          -> Int         -- ^ The number of solutions to be returned
          -> IO (Either ParseError [Solution])
 runModel model = testModelWithParser tryDefaultSolutions (map turnToItem model)
@@ -93,7 +93,7 @@ iTestModel m = do
 -- @output@ item, so that the solutions have the default format.
 testModel :: MZModel -- ^ The model
   -> FilePath        -- ^ The path of the file in which the FlatZinc translation will be printed (without ".fzn" extension)
-  -> Int             -- ^ The chosen solver (@1@ for the G12/FD built-in solver or @2@ for choco3)
+  -> Int             -- ^ The chosen solver (@1@ for the G12/FD built-in solver, @2@ for choco3 or @3@ for gecode)
   -> Int             -- ^ The number of solutions to be returned
   -> IO (Either ParseError [Solution])
 testModel = testModelWithParser tryDefaultSolutions
@@ -118,6 +118,9 @@ testModelWithParser p m mpath s n = do
                 str -> addTrailingPathSeparator str
   let mfzn = (spaceFix $ mz_dir ++ "mzn2fzn") ++ " -O- - -o " ++ (spaceFix (mpath ++ ".fzn"))
   let flatzinc = spaceFix $ mz_dir ++ "flatzinc"
+  let fzn_gecode = case fzngecode configuration of
+                     "" -> spaceFix $ mz_dir ++ "fzn-gecode"
+                     str -> str
   -- Uncomment line below for debugging
   writeFile (mpath ++ ".mzn") (layout m)
   readCreateProcess (shell mfzn) (layout m)
@@ -129,6 +132,7 @@ testModelWithParser p m mpath s n = do
                     chocoSolver = chocosolver configuration
                 in readCreateProcess (shell $ "java -cp ." ++ (intercalate [searchPathSeparator] [chocoSolver, chocoParser, antlr]) ++ " org.chocosolver.parser.flatzinc.ChocoFZN -a " ++ mpath ++ ".fzn") ""
                 -- in readCreateProcess (shell $ "java -cp ." ++ (intercalate [searchPathSeparator] [chocoSolver, chocoParser, antlr]) ++ " org.chocosolver.parser.flatzinc.ChocoFZN -a " ++ mpath ++ ".fzn > " ++ mpath ++ ".results.txt") ""
+           3 -> readCreateProcess (shell $ fzn_gecode ++ " -n " ++ show n ++ " " ++ mpath ++ ".fzn") ""
   -- Uncomment two lines below for debugging
   -- writeFile (mpath ++ ".results.txt") res
   -- getSolutionsFromFile (mpath ++ ".fzn.results.txt") n

@@ -30,6 +30,7 @@ data Configuration
            , chocosolver :: FilePath -- ^ Path to the choco_solver java library
            , chocoparser :: FilePath -- ^ Path to the choco_parser java library
            , antlr_path  :: FilePath -- ^ Path to the antlr java library
+           , fzngecode   :: FilePath -- ^ Path to fzn-gecode binary
            }
   deriving Show
 
@@ -38,6 +39,7 @@ instance Monoid Configuration where
                   , chocosolver = ""
                   , chocoparser = ""
                   , antlr_path = ""
+                  , fzngecode = ""
                   }
    
   mappend a b = 
@@ -45,6 +47,7 @@ instance Monoid Configuration where
            , chocosolver = dropEmpty (chocosolver a) (chocosolver b)
            , chocoparser = dropEmpty (chocoparser a) (chocoparser b)
            , antlr_path  = dropEmpty (antlr_path a) (antlr_path b)
+           , fzngecode   = dropEmpty (fzngecode a) (fzngecode b)
            }
 
 dropEmpty :: String -> String -> String
@@ -58,22 +61,33 @@ makeConf (Right (name, path))
                              , chocosolver = ""
                              , chocoparser = ""
                              , antlr_path  = ""
+                             , fzngecode   = ""
                              }
   | name == conf_cs = Config { minizinc    = ""
                              , chocosolver = path
                              , chocoparser = ""
                              , antlr_path  = ""
+                             , fzngecode   = ""
                              }
   | name == conf_cp = Config { minizinc    = ""
                              , chocosolver = ""
                              , chocoparser = path
                              , antlr_path  = ""
+                             , fzngecode   = ""
                              }
   | name == conf_an = Config { minizinc    = ""
                              , chocosolver = ""
                              , chocoparser = ""
                              , antlr_path  = path
+                             , fzngecode   = ""
                              }
+  | name == conf_gc = Config { minizinc    = ""
+                             , chocosolver = ""
+                             , chocoparser = ""
+                             , antlr_path  = ""
+                             , fzngecode   = path
+                             }
+
 makeConf (Right (_,_)) = mempty
 makeConf (Left err) = mempty
 
@@ -84,19 +98,22 @@ conf_mz = "MINIZINC_DIR"
 conf_cs = "SOLVER"
 conf_cp = "PARSER"
 conf_an = "ANTLR"
+conf_gc = "FZN_GECODE"
 
 parser_choco = string choco
 parser_mz = string conf_mz
 parser_cs = parser_choco >> string "SOLVER"
 parser_cp = parser_choco >> string "PARSER"
 parser_an = string conf_an
+parser_gc = string conf_gc
 
 emptyConf = Config { minizinc    = ""
                    , chocosolver = ""
                    , chocoparser = ""
                    , antlr_path  = ""
+                   , fzngecode   = ""
                    }
-                
+
 confFile = joinPath ["HZconf", "conf.txt"]
 
 -- | Parses the configuration file.
@@ -106,7 +123,7 @@ parseConfig = do
 
 parserLine :: Parser (String, String)
 parserLine = do
-  left <- try parser_mz <|> (try parser_cs <|> parser_cp) <|> parser_an
+  left <- try parser_mz <|> (try parser_cs <|> parser_cp) <|> parser_an <|> parser_gc
   C.spaces
   char '='
   C.spaces
