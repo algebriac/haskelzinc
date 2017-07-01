@@ -134,7 +134,7 @@ eosMSG = "----------"                 -- End-of-solution message
 -----------------------
 
 runParser :: Parser a -> String -> Either P.ParseError a
-runParser p = parse (p <* eof) ""
+runParser p = parse p ""
 
 -- | @tryDefaultSolutions n@ tries to parse the solutions and, if it succeeds, returns 
 -- the first @n@. Else, tries 'defaultUnsat' and returns an empty list.
@@ -149,7 +149,7 @@ trySolutions :: (Int -> Parser [Solution]) -- Custom solutions parser
              -> Parser String              -- Custom /Unsatisfiable/ message parser
              -> Int                        -- Number of solutions to be returned
              -> Parser [Solution]
-trySolutions p u n = try $ (p n) <|> (u >> return [[]])
+trySolutions p u n = try (p n) <|> (u >> return [[]])
 
 -- | Parses the default message for a model with no solutions: @=====UNSATISFIABLE=====@, 
 -- surrounded by commented lines before and after.
@@ -161,7 +161,7 @@ takeSolutions n = take n <$> defaultSolutions
 
 -- | Parses all the returned solutions.
 defaultSolutions :: Parser [Solution]
-defaultSolutions = manyTill defaultSolution (string eoSMSG *> endOfLine)
+defaultSolutions = manyTill defaultSolution ((string eoSMSG *> endOfLine *> pure True) <|> (eof *> pure False))
 
 -- | Parses a single solution with the default output format from the set of returned 
 -- solutions.
