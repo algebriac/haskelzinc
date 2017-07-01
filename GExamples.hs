@@ -80,9 +80,9 @@ car = [
   par (Set Int) "Cars" =. 1 ... "nbCars",
   par (Set Int) "Options" =. 1 ... "nbOptions",
   par (Set Int) "Slots" =. 1 ... "nbSlots",
-  par (Array[ctvar "Cars"] Dec Int) "demand"
+  par (Array[ctvar "Cars"] Par Int) "demand"
     =. intArray [1, 1, 2, 2, 2, 2],
-  par (Array[ctvar "Options", ctvar "Cars"] Dec Int) "option"
+  par (Array[ctvar "Options", ctvar "Cars"] Par Int) "option"
     =. mz_array2d["Options", "Cars", intArray [ 1, 0, 0, 0, 1, 1
                                              , 0, 0, 1, 1, 0, 1
                                              , 1, 0, 0, 0, 1, 0
@@ -90,9 +90,9 @@ car = [
                                              , 0, 0, 1, 0, 0, 0
                                              ]
          ],
-  par (Array[ctvar "Options", CT $ 1 ... 2] Dec Int) "capacity"
+  par (Array[ctvar "Options", CT $ 1 ... 2] Par Int) "capacity"
     =. mz_array2d["Options", 1 ... 2, intArray [1, 2, 2, 3, 1, 3, 2, 5, 1, 5]],
-  par (Array[ctvar "Options"] Dec Int) "optionDemand"
+  par (Array[ctvar "Options"] Par Int) "optionDemand"
     =. forall [["j"] @@ "Cars"] "sum" ("demand"!.["j"] *. "option"!.["i", "j"]) #|. [["i"] @@ "Options"],
   (%) "decision variables",
   var (Array[ctvar "Slots"] Dec (ctvar "Cars")) "slot",
@@ -149,7 +149,7 @@ divisor225 = [
   var (CT $ int 1 ... mz_pow[10, "n"] -. 1) "y",
   predicate "to_num"[var (Array [Int] Dec Int) "a", var Int "n"]
     =. let_ [
-      var Int "len" =. mz_length["a"]
+      par Int "len" =. mz_length["a"]
     ]
     ("n" =.= forall [["i"] @@ 1 ... "len"] "sum" (mz_pow[10, "len" -. "i"] *. "a"!.["i"])),
     solve $ minimize "y"
